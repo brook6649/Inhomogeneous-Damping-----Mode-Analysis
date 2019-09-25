@@ -1,0 +1,28 @@
+
+! Displacement UX,UY,YZ
+! Rotation  ROTX,ROTY,ROTZ
+
+*GET,nodes_num,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*DIM,disp_rota,array,nodes_num,7                    ! 2-D array nxyz 
+   
+*DO,i,1,10,1
+    Lfd_Nr=i
+    set,1,i,,1
+
+    *DO,j,1,nodes_num,1
+        disp_rota(j,1) = j
+        *GET,disp_rota(j,2),NODE,j,U,X                                              ! /prep7
+        *GET,disp_rota(j,3),NODE,j,U,Y
+        *Get,disp_rota(j,4),NODE,j,U,Z
+        *GET,disp_rota(j,5),NODE,j,ROT,X                                              ! /prep7
+        *GET,disp_rota(j,6),NODE,j,ROT,Y
+        *Get,disp_rota(j,7),NODE,j,ROT,Z
+    *ENDDO
+
+    *MWRITE,disp_rota,Disp_Rota%Lfd_Nr%_imag,txt,,IJK
+    (2085(E15.8,6x))
+
+*ENDDO 
+
+
+/eof

@@ -1,0 +1,185 @@
+FINISH
+/CLEAR
+
+/TITLE,Modal analysis_1
+
+/PREP7
+/UNITS,SI                   ! SI-units
+ET,1,SHELL281               ! element type Shell 281
+
+! same material properties, different damping constants for each type
+MP,EX,1,6.9E+10             ! aluminium material properties #1
+MP,PRXY,1,0.34
+MP,DENS,1,2830
+MP,EX,2,6.9E+10             ! aluminium material properties #2
+MP,PRXY,2,0.34
+MP,DENS,2,2830
+
+! set thickness of the shell
+SECTYPE,1,SHELL
+SECDATA,0.002
+
+! set damping constants
+TB,SDAMP,1,,,ALPD        ! #1  alpha
+TBDATA,,3
+TB,SDAMP,1,,,BETD        ! #1  beta
+TBDATA,,3.0e-5
+TB,SDAMP,2,,,ALPD        ! #2  alpha
+TBDATA,,9
+TB,SDAMP,2,,,BETD        ! #2  beta
+TBDATA,,9.0e-5
+
+*SET,length,0.450           ! set parameters
+*SET,width,0.035
+K,1,0,0,0
+K,2,0,width,0
+K,3,length,0,0
+K,4,length,width,0
+A,1,2,4,3                    ! create Area   
+             
+!Volume generation is not needed for a shell281 model.
+!VEXT,1,,,0,0,0.002           ! generate volume #1 
+
+K,5,length-0.1,0,0
+K,6,length-0.1,width,0
+L,5,6                        ! set a middle line #5
+ASBL,1,5,,,                  ! separate the area with this line into two parts: area #2 and #3
+
+! assign different damping constants to each area #2 and #3
+ASEL,S,AREA,,2
+AATT,1,
+ASEL,S,AREA,,3
+AATT,2
+
+ESIZE,0.005                  ! element size
+ASEL,S,AREA,,2,3             ! select areas #2 and #3
+AMESH,ALL                    ! mesh all selected areas
+
+LSEL,S,LINE,,1,3,2           ! select line #1 and #3
+DL,ALL,,All,0               ! constraint lines #1 and #3
+
+allsel                   ! CG hier um sicher zu sein, dass alles ausgewaehlt wurde
+FINISH
+
+
+/SOLU
+
+ANTYPE,2                     ! modal analysis
+!MODOPT,LANPCG,10              ! PCG Lanczos method, 10 modes  
+!MODOPT,Unsym,10,,,on           ! CG schlage anwendung des DAMP solvers vor.  CmpMod on
+MODOPT,DAMP,10                 
+!EQSLV,PCG                    ! PCG iterative equation solver
+MXPAND,10                     ! expand 10 modes
+
+
+SOLVE
+
+
+FINISH
+
+
+/POST1
+SET,LIST              ! Scan the results file and list a summary of each load step.
+SET,FIRST             ! Read the first data set. 
+PLDISP                ! Displays the displaced structure
+PRNSOL,DOF,COMP       ! print the nodal solutions
+PLNSOL,U,SUM          ! Displays solution results as continuous element contours.
+!ANMODE,5,,5           ! Produces an animated sequence of a mode shape
+
+
+/input,'ExportData_nodes_coord_and_freq','inp',,1                ! execute data export command by importing a inp-file
+
+/input,'ExportData_10_modes_real','inp',,1         ! export real part of data for different modes 1--10
+
+/input,'ExportData_10_modes_imag','inp',,1         ! export imaginary part of data for different modes 1--10
+                                                    
+                                                 ! Details, see the code in inp-files
+
+
+
+
+! The following codes should be writen in a inp-file for exporting solution data
+
+
+*GET,nmax_n,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*DIM,nxyz,array,nmax_n,3,                    ! 2-D array nxyz 
+*DO,i,1,nmax_n
+   *GET,nxyz(i,1),NODE,i,LOC,X                                              ! /prep7
+   *GET,nxyz(i,2),NODE,i,LOC,Y
+   *Get,nxyz(i,3),NODE,i,LOC,Z
+*ENDDO
+
+
+
+! 1.Frequency
+*GET,nmax_f,ACTIVE,,SET,NSET                        ! /post1
+*DIM,Eig_Frequenz,array,nmax_f
+
+*DO,i,1,nmax_f
+   *GET,Eig_Frequenz(i),MODE,i,FREQ                       ! /solu
+*ENDDO
+
+!*CFOPEN,eigenvalues,txt,'G:/Ansys_working folder'        ! /post1
+!*VWRITE,eigvalsreal,eigvalsimag
+!(E16.8,E16.8)
+!*CFCLOS
+
+
+! 2.Keypoints Coordinates
+
+*GET,nmax_kp,KP,,NUM,MAX                             ! highest kp number in selected set    /prep7
+*DIM,KP_coord,array,nmax_kp,3
+*DO,i,1,nmax_kp
+   *GET,KP_coord(i,1),KP,i,LOC,X                                              ! /prep7
+   *GET,KP_coord(i,2),KP,i,LOC,Y
+   *Get,KP_coord(i,3),KP,i,LOC,Z
+*ENDDO
+
+!*CFOPEN,KP_COORD,txt,'G:/Ansys_working folder'        ! /post1
+!*VWRITE,KP_x,KP_y,KP_z
+!(E16.8,E16.8,E16.8)
+!*CFCLOS
+
+! 3. Nodes coordinates
+
+*GET,nmax_n,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*DIM,nxyz,array,nmax_n,3,                    ! 2-D array nxyz 
+*DO,i,1,nmax_n
+   *GET,nxyz(i,1),NODE,i,LOC,X                                              ! /prep7
+   *GET,nxyz(i,2),NODE,i,LOC,Y
+   *Get,nxyz(i,3),NODE,i,LOC,Z
+*ENDDO
+
+!*CFOPEN,NODE_COORD,txt,'G:/Ansys_working folder'        ! /post1
+!*VWRITE,nxyz
+!(E16.8)
+!*CFCLOS
+
+! 4.Verschiebung
+
+*GET,nmax_ver,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*DIM,displacement,array,nmax_ver,3,                    ! 2-D array nxyz 
+
+*DO,i,1,nmax_ver
+   *GET,displacement(i,1),NODE,i,U,X                                              ! /prep7
+   *GET,displacement(i,2),NODE,i,U,Y
+   *Get,displacement(i,3),NODE,i,U,Z
+*ENDDO
+
+
+! 5.Rotation
+
+*GET,nmax_rota,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*DIM,rotation,array,nmax_ver,3,                    ! 2-D array nxyz 
+
+*DO,i,1,nmax_rota
+   *GET,rotation(i,1),NODE,i,ROT,X                                              ! /prep7
+   *GET,rotation(i,2),NODE,i,ROT,Y
+   *Get,rotation(i,3),NODE,i,ROT,Z
+*ENDDO
+
+/input,'ExportData_06_16','inp',,1                ! execute data export command by importing a inp-file
+
+/input,'ExportData_10_modes','inp',,1             ! export data for different modes 1--10
+
+FINISH

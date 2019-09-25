@@ -1,0 +1,57 @@
+!!! Export Data
+
+Lfd_Nr=1
+
+! Coordinates of all nodes
+
+*GET,nmax_n,NODE,,NUM,MAX                    ! highest node number in selected set    /prep7
+*GET,nmin_n,NODE,,NUM,MIN
+*DIM,nxyz,array,nmax_n,4,                    ! 2-D array nxyz 
+*DO,i,nmin_n,nmax_n,1
+   nxyz(i,1) = i
+   *GET,nxyz(i,2),NODE,i,LOC,X                                              ! /prep7
+   *GET,nxyz(i,3),NODE,i,LOC,Y
+   *Get,nxyz(i,4),NODE,i,LOC,Z
+*ENDDO
+
+*MWRITE,nxyz,Nodes,txt,,ijk
+(2085(F15.8,5x))
+
+!*CFOPEN,Nodes,txt
+!*VWRITE,nxyz(1),nxyz(2),nxyz(3),nxyz(4)
+!(F6.1,6x,3(E15.8,5x))
+!*CFCLOS
+
+
+
+! Coordinates of all keypoints
+
+!*GET,nmax_kp,KP,,NUM,MAX                             ! highest kp number in selected set    /prep7
+!*GET,nmin_kp,KP,,NUM,MIN
+!*DIM,KP_coord,array,nmax_kp,4
+!*DO,i,nmin_kp,nmax_kp,1
+!   KP_coord(:,1) = i
+!   *GET,KP_coord(i,2),KP,i,LOC,X                                              ! /prep7
+!   *GET,KP_coord(i,3),KP,i,LOC,Y
+!   *Get,KP_coord(i,4),KP,i,LOC,Z
+!*ENDDO
+
+!*CFOPEN,KP_coord,txt
+!*VWRITE,KP_coord(1),KP_coord(2),KP_coord(3),KP_coord(4)
+!(F6.1,6x,3(F15.8,5x))
+!*CFCLOS
+
+
+
+! Frequencies of different modes respectively
+
+*GET,nmax_f,ACTIVE,,SET,NSET                        ! /post1
+*DIM,Eig_Frequenz,array,nmax_f*2
+
+*DO,i,1,nmax_f*2
+   *GET,Eig_Frequenz(i),MODE,i,FREQ                       ! /solu
+*ENDDO
+*MWRITE,Eig_Frequenz,.\Eigenfreq_%Lfd_Nr%,txt,,IJK                   
+(1(F15.8,5x)) 
+
+/eof
